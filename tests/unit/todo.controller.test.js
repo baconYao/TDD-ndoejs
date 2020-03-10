@@ -1,5 +1,7 @@
 const TodoController = require("../../controllers/todo.controller");
 const TodoModel = require("../../model/todo.model");
+const httpsMock = require("node-mocks-http");
+const newTodo = require("../mock-data/new-todo.json");
 
 // https://mongoosejs.com/docs/models.html#constructing-documents
 // https://jestjs.io/docs/en/mock-functions.html
@@ -17,7 +19,13 @@ describe("TodoController.createTodo", () => {
    * 在這裡因為使用 jest.fn 去 mock function，因此並不會產生任何 data 在 DB 內。
    */
   it("should call TodoModel.create", () => {
-    TodoController.createTodo();
-    expect(TodoModel.create).toBeCalled();
+    let req, res, next;
+    req = httpsMock.createRequest();
+    res = httpsMock.createResponse();
+    next = null;
+    // 給予 dummy data as input
+    req.body = newTodo;
+    TodoController.createTodo(req ,res, next);
+    expect(TodoModel.create).toBeCalledWith(newTodo);
   });
 });
