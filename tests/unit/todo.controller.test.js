@@ -9,6 +9,13 @@ const newTodo = require("../mock-data/new-todo.json");
 // 去 overwrite TodoModel.create。每當此 method 被 call 時，並不會真實去執行此 method 的功能 (已被jest.fn 取代)。
 TodoModel.create = jest.fn();
 
+let req, res, next;
+beforeEach (() => {
+  req = httpsMock.createRequest();
+  res = httpsMock.createResponse();
+  next = null;
+});
+
 
 describe("TodoController.createTodo", () => {
   it("should have a createTodo function", () => {
@@ -19,10 +26,6 @@ describe("TodoController.createTodo", () => {
    * 在這裡因為使用 jest.fn 去 mock function，因此並不會產生任何 data 在 DB 內。
    */
   it("should call TodoModel.create", () => {
-    let req, res, next;
-    req = httpsMock.createRequest();
-    res = httpsMock.createResponse();
-    next = null;
     // 給予 dummy data as input
     req.body = newTodo;
     TodoController.createTodo(req ,res, next);
