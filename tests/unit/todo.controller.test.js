@@ -18,6 +18,11 @@ beforeEach (() => {
 
 
 describe("TodoController.createTodo", () => {
+  beforeEach(() => {
+    // 給予 dummy data as request's body payload
+    req.body = newTodo;
+  });
+  
   it("should have a createTodo function", () => {
     expect(typeof TodoController.createTodo).toBe("function");
   });
@@ -26,9 +31,30 @@ describe("TodoController.createTodo", () => {
    * 在這裡因為使用 jest.fn 去 mock function，因此並不會產生任何 data 在 DB 內。
    */
   it("should call TodoModel.create", () => {
-    // 給予 dummy data as input
-    req.body = newTodo;
     TodoController.createTodo(req ,res, next);
     expect(TodoModel.create).toBeCalledWith(newTodo);
+  });
+  /*
+   * 檢查 TodoModel.create 新增一筆 document 時，回傳的status code 應該是 201。
+   */
+  it("should return 201 status code", () => {
+    TodoController.createTodo(req ,res, next);
+    // 驗證回傳的 status code 為 201
+    expect(res.statusCode).toBe(201);
+    // https://github.com/howardabrams/node-mocks-http
+    // _isEndCalled() 是用來驗證 response 是否有被送出。
+    // res.status(201) 會過上面的驗證，但應為沒有 send() / json()，因此並沒有真的送出 response
+    expect(res._isEndCalled()).toBeTruthy();
+  });
+  it("should return json body in response", () => {
+    TodoModel.create.mockReturnValue(newTodo);
+    TodoController.createTodo(req ,res, next);
+
+    // 此 case 中，儘管我們知道 TodoController.createTodo 回傳的 json data newTodo 的內容是一樣的，但仍然會出現錯誤:
+    // 'If it should pass with deep equality, replace "toBe" with "toStrictEqual"'，這是因為
+    // newTodo 和 createModel (todo.controller.js 回傳的值) 記憶體位址不同，因此 toBe 會判斷為不同的資料。
+    // 所以要用 'toStrictEqual' 取代 'toBe'
+    // expect(res._getJSONData()).toBe(newTodo);
+    expect(res._getJSONData()).toStrictEqual(newTodo);
   });
 });
