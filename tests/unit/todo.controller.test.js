@@ -37,8 +37,8 @@ describe("TodoController.createTodo", () => {
   /*
    * 檢查 TodoModel.create 新增一筆 document 時，回傳的status code 應該是 201。
    */
-  it("should return 201 status code", () => {
-    TodoController.createTodo(req ,res, next);
+  it("should return 201 status code", async () => {
+    await TodoController.createTodo(req ,res, next);
     // 驗證回傳的 status code 為 201
     expect(res.statusCode).toBe(201);
     // https://github.com/howardabrams/node-mocks-http
@@ -46,9 +46,9 @@ describe("TodoController.createTodo", () => {
     // res.status(201) 會過上面的驗證，但應為沒有 send() / json()，因此並沒有真的送出 response
     expect(res._isEndCalled()).toBeTruthy();
   });
-  it("should return json body in response", () => {
+  it("should return json body in response", async () => {
     TodoModel.create.mockReturnValue(newTodo);
-    TodoController.createTodo(req ,res, next);
+    await TodoController.createTodo(req ,res, next);
 
     // 此 case 中，儘管我們知道 TodoController.createTodo 回傳的 json data newTodo 的內容是一樣的，但仍然會出現錯誤:
     // 'If it should pass with deep equality, replace "toBe" with "toStrictEqual"'，這是因為
