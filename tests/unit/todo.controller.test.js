@@ -13,7 +13,7 @@ let req, res, next;
 beforeEach (() => {
   req = httpsMock.createRequest();
   res = httpsMock.createResponse();
-  next = null;
+  next = jest.fn();
 });
 
 
@@ -56,5 +56,14 @@ describe("TodoController.createTodo", () => {
     // 所以要用 'toStrictEqual' 取代 'toBe'
     // expect(res._getJSONData()).toBe(newTodo);
     expect(res._getJSONData()).toStrictEqual(newTodo);
+  });
+
+  it("should handle errors" , async () => {
+    // 期望收到的 error message (表示 error handling 處理到)
+    const errorMessgae = { message: "Done property missing" };
+    const rejectPromise = Promise.reject(errorMessgae);
+    TodoModel.create.mockReturnValue(rejectPromise);
+    await TodoController.createTodo(req, res, next);
+    expect(next).toBeCalledWith(errorMessgae);
   });
 });
