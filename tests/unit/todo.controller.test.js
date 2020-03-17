@@ -4,10 +4,14 @@ const httpsMock = require("node-mocks-http");
 const newTodo = require("../mock-data/new-todo.json");
 
 // https://mongoosejs.com/docs/models.html#constructing-documents
+// https://mongoosejs.com/docs/api.html#model_Model.create
+
+// https://medium.com/enjoy-life-enjoy-coding/jest-jojo%E6%98%AF%E4%BD%A0-%E6%88%91%E7%9A%84%E6%9B%BF%E8%BA%AB%E8%83%BD%E5%8A%9B%E6%98%AF-mock-4de73596ea6e
 // https://jestjs.io/docs/en/mock-functions.html
 // 已知 Mongoose 要建立一個 document 時，會呼叫 create method，因此為了 Unit test，這裡使用 jest 的 mock function 功能
 // 去 overwrite TodoModel.create。每當此 method 被 call 時，並不會真實去執行此 method 的功能 (已被jest.fn 取代)。
 TodoModel.create = jest.fn();
+TodoModel.find = jest.fn();   // mock Model find() method -> https://mongoosejs.com/docs/api.html#model_Model.find
 
 let req, res, next;
 beforeEach (() => {
@@ -15,7 +19,6 @@ beforeEach (() => {
   res = httpsMock.createResponse();
   next = jest.fn();
 });
-
 
 describe("TodoController.createTodo", () => {
   beforeEach(() => {
@@ -47,6 +50,8 @@ describe("TodoController.createTodo", () => {
     expect(res._isEndCalled()).toBeTruthy();
   });
   it("should return json body in response", async () => {
+    // 由於 TodoModel.create 已經被 mock，因此若要給予回傳的值時，可以使用 mockReturnValue 搭配要給予的值 newTodo
+    // 作為當 TodoModel.create 會回傳的值
     TodoModel.create.mockReturnValue(newTodo);
     await TodoController.createTodo(req ,res, next);
 
@@ -65,5 +70,15 @@ describe("TodoController.createTodo", () => {
     TodoModel.create.mockReturnValue(rejectPromise);
     await TodoController.createTodo(req, res, next);
     expect(next).toBeCalledWith(errorMessgae);
+  });
+});
+
+describe("TodoController.getTodos", () => {
+  it("should have a getTodos function", () => {
+    expect(typeof TodoController.getTodos).toBe("function");
+  });
+  it("should call TodoModel.find({})", () => {
+    TodoController.getTodos(req ,res, next);
+    expect(TodoModel.find).toBeCalledWith({});
   });
 });
