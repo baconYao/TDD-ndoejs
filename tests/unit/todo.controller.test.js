@@ -13,6 +13,7 @@ const allTodos = require("../mock-data/all-todos.json");
 // 去 overwrite TodoModel.create。每當此 method 被 call 時，並不會真實去執行此 method 的功能 (已被jest.fn 取代)。
 TodoModel.create = jest.fn();
 TodoModel.find = jest.fn();   // mock Model find() method -> https://mongoosejs.com/docs/api.html#model_Model.find
+TodoModel.findById = jest.fn();
 
 let req, res, next;
 beforeEach (() => {
@@ -95,5 +96,37 @@ describe("TodoController.getTodos", () => {
     TodoModel.find.mockReturnValue(rejectPromise);
     await TodoController.getTodos(req, res, next);
     expect(next).toBeCalledWith(errorMessage);
+  });
+});
+
+describe("TodoController.getTodoId", () => {
+  it("should have a getTodoById function", () => {
+    expect(typeof TodoController.getTodoById).toBe("function");
+  });
+  it("should call TodoModel.findById with route parameters" , async () => {
+    req.params.todoId = "5e71079f3926ef282300ba81";
+    await TodoController.getTodoById(req, res, next);
+    expect(TodoModel.findById).toBeCalledWith("5e71079f3926ef282300ba81");
+  });
+  it("should return json body and response code 200", async () => {
+    TodoModel.findById.mockReturnValue(newTodo);
+    await TodoController.getTodoById(req, res, next);
+    expect(res.statusCode).toBe(200);
+    expect(res._isEndCalled()).toBeTruthy();
+    expect(res._getJSONData()).toStrictEqual(newTodo);
+  });
+  it("should handle errors in getTodoById", async () => {
+    const errorMessage = { message: "Error finding" };
+    const rejectPromise = Promise.reject(errorMessage);
+    TodoModel.findById.mockReturnValue(rejectPromise);
+    await TodoController.getTodoById(req, res, next);
+    expect(next).toBeCalledWith(errorMessage);
+  });
+  // 檢驗 沒找到特定的 id 的 todo
+  it("should return 404 when item doesn't exist", async () => {
+    TodoModel.findById.mockReturnValue(null);
+    await TodoController.getTodoById(req, res, next);
+    expect(res.statusCode).toBe(404);
+    expect(res._isEndCalled()).toBeTruthy();
   });
 });
