@@ -14,8 +14,10 @@ const allTodos = require("../mock-data/all-todos.json");
 TodoModel.create = jest.fn();
 TodoModel.find = jest.fn();   // mock Model find() method -> https://mongoosejs.com/docs/api.html#model_Model.find
 TodoModel.findById = jest.fn();
+TodoModel.findByIdAndUpdate = jest.fn();
 
 let req, res, next;
+const todoId = "5e71079f3926ef282300ba81";
 beforeEach (() => {
   req = httpsMock.createRequest();
   res = httpsMock.createResponse();
@@ -104,9 +106,9 @@ describe("TodoController.getTodoId", () => {
     expect(typeof TodoController.getTodoById).toBe("function");
   });
   it("should call TodoModel.findById with route parameters" , async () => {
-    req.params.todoId = "5e71079f3926ef282300ba81";
+    req.params.todoId = todoId;
     await TodoController.getTodoById(req, res, next);
-    expect(TodoModel.findById).toBeCalledWith("5e71079f3926ef282300ba81");
+    expect(TodoModel.findById).toBeCalledWith(todoId);
   });
   it("should return json body and response code 200", async () => {
     TodoModel.findById.mockReturnValue(newTodo);
@@ -128,5 +130,29 @@ describe("TodoController.getTodoId", () => {
     await TodoController.getTodoById(req, res, next);
     expect(res.statusCode).toBe(404);
     expect(res._isEndCalled()).toBeTruthy();
+  });
+});
+
+describe("TodoController.updateTodo", () => {
+  it("should have a updateTodo function", () => {
+    expect(typeof TodoController.updateTodo).toBe("function");
+  });
+  it("should update with TodoModel.findByIdAndUpdate", async () => {
+    req.params.todoId = todoId;
+    req.body = newTodo;
+    await TodoController.updateTodo(req, res, next);
+    expect(TodoModel.findByIdAndUpdate).toBeCalledWith(todoId, newTodo, {
+      new: true,
+      useFindAndModify: false
+    });
+  });
+  it("should return a response with json data and http code 200", async () => {
+    req.params.todoId = todoId;
+    req.body = newTodo;
+    TodoModel.findByIdAndUpdate.mockReturnValue(newTodo);
+    await TodoController.updateTodo(req, res, next);
+    expect(res.statusCode).toBe(200);
+    expect(res._isEndCalled()).toBeTruthy();
+    expect(res._getJSONData()).toStrictEqual(newTodo);
   });
 });
