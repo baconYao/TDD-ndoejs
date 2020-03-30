@@ -155,4 +155,17 @@ describe("TodoController.updateTodo", () => {
     expect(res._isEndCalled()).toBeTruthy();
     expect(res._getJSONData()).toStrictEqual(newTodo);
   });
+  it("should handle errors", async () => {
+    const errorMessage = { message: "Error" };
+    const rejectPromise = Promise.reject(errorMessage);
+    TodoModel.findByIdAndUpdate.mockReturnValue(rejectPromise);
+    await TodoController.updateTodo(req, res, next);
+    expect(next).toBeCalledWith(errorMessage);
+  });
+  it("should return 404 when item doesn't exist", async () => {
+    TodoModel.findByIdAndUpdate.mockReturnValue(null);
+    await TodoController.updateTodo(req, res, next);
+    expect(res.statusCode).toBe(404);
+    expect(res._isEndCalled()).toBeTruthy();
+  });
 });
