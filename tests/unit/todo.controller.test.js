@@ -11,10 +11,14 @@ const allTodos = require("../mock-data/all-todos.json");
 // https://jestjs.io/docs/en/mock-functions.html
 // 已知 Mongoose 要建立一個 document 時，會呼叫 create method，因此為了 Unit test，這裡使用 jest 的 mock function 功能
 // 去 overwrite TodoModel.create。每當此 method 被 call 時，並不會真實去執行此 method 的功能 (已被jest.fn 取代)。
-TodoModel.create = jest.fn();
-TodoModel.find = jest.fn();   // mock Model find() method -> https://mongoosejs.com/docs/api.html#model_Model.find
-TodoModel.findById = jest.fn();
-TodoModel.findByIdAndUpdate = jest.fn();
+// TodoModel.create = jest.fn();
+// TodoModel.find = jest.fn();   // mock Model find() method -> https://mongoosejs.com/docs/api.html#model_Model.find
+// TodoModel.findById = jest.fn();
+// TodoModel.findByIdAndUpdate = jest.fn();
+// TodoModel.findByIdAndDelete = jest.fn();
+
+// 除了以上個別的使用 jest.fn() 來 mock之外，也可以針對整個 model 做 mock
+jest.mock("../../model/todo.model");
 
 let req, res, next;
 const todoId = "5e71079f3926ef282300ba81";
@@ -165,6 +169,37 @@ describe("TodoController.updateTodo", () => {
   it("should return 404 when item doesn't exist", async () => {
     TodoModel.findByIdAndUpdate.mockReturnValue(null);
     await TodoController.updateTodo(req, res, next);
+    expect(res.statusCode).toBe(404);
+    expect(res._isEndCalled()).toBeTruthy();
+  });
+});
+
+describe("TodoController.deleteTodo", () => {
+  it("should have a deleteTodo function", () => {
+    expect(typeof TodoController.deleteTodo).toBe("function");
+  });
+  it("should call findByIdAndDelete", async () => {
+    req.params.todoId = todoId;
+    await TodoController.deleteTodo(req, res, next);
+    expect(TodoModel.findByIdAndDelete).toBeCalledWith(todoId);
+  });
+  it("should return 200 OK and deleted todomodel", async () => {
+    TodoModel.findByIdAndDelete.mockReturnValue(newTodo);
+    await TodoController.deleteTodo(req, res, next);
+    expect(res.statusCode).toBe(200);
+    expect(res._isEndCalled()).toBeTruthy();
+    expect(res._getJSONData()).toStrictEqual(newTodo);
+  });
+  it("should handle errors", async () => {
+    const errorMessage = { message: "Error" };
+    const rejectPromise = Promise.reject(errorMessage);
+    TodoModel.findByIdAndDelete.mockReturnValue(rejectPromise);
+    await TodoController.deleteTodo(req, res, next);
+    expect(next).toBeCalledWith(errorMessage);
+  });
+  it("should handle 404", async () => {
+    TodoModel.findByIdAndDelete.mockReturnValue(null);
+    await TodoController.deleteTodo(req, res, next);
     expect(res.statusCode).toBe(404);
     expect(res._isEndCalled()).toBeTruthy();
   });
