@@ -8,7 +8,7 @@ const newTodo = require("../mock-data/new-todo.json");
  */ 
 
 const endpointUrl = "/todos/";
-let firstTodo;
+let firstTodo, newTodoId;
 
 describe(endpointUrl, () => {
   it(`GET ${endpointUrl}`, async () => {
@@ -37,14 +37,22 @@ describe(endpointUrl, () => {
     expect(response.statusCode).toBe(201);
     expect(response.body.title).toBe(newTodo.title);
     expect(response.body.done).toBe(newTodo.done);
+    newTodoId = response.body._id;
   }, 10000);
   it(`should return error 500 on malformed data with POST ${endpointUrl}`, async () => {
     const response = await request(app)
       .post(endpointUrl)
       .send({ title: "Missing done property" });
-    expect(response.status).toBe(500);
+    expect(response.statusCode).toBe(500);
     expect(response.body).toStrictEqual({
       message: "Todo validation failed: done: Path `done` is required."
     });
+  });
+  it(`PUT ${endpointUrl}`, async () => {
+    const testData = { title: "PUT update for integration test", done: true };
+    const response = await request(app).put(endpointUrl + newTodoId).send(testData);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.title).toBe(testData.title);
+    expect(response.body.done).toBe(testData.done);
   });
 });
