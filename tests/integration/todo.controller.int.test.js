@@ -9,6 +9,7 @@ const newTodo = require("../mock-data/new-todo.json");
 
 const endpointUrl = "/todos/";
 let firstTodo, newTodoId;
+let testData = { title: "PUT update for integration test", done: true };
 
 describe(endpointUrl, () => {
   it(`GET ${endpointUrl}`, async () => {
@@ -49,10 +50,23 @@ describe(endpointUrl, () => {
     });
   });
   it(`PUT ${endpointUrl}`, async () => {
-    const testData = { title: "PUT update for integration test", done: true };
     const response = await request(app).put(endpointUrl + newTodoId).send(testData);
     expect(response.statusCode).toBe(200);
     expect(response.body.title).toBe(testData.title);
     expect(response.body.done).toBe(testData.done);
+  });
+  test("HTTP DELETE", async () => {
+    const res = await request(app)
+      .delete(endpointUrl + newTodoId)
+      .send();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.title).toBe(testData.title);
+    expect(res.body.done).toBe(testData.done);
+  });
+  test("HTTP DELETE 404", async () => {
+    const res = await request(app)
+      .delete(endpointUrl + noneExistingTodoId)
+      .send();
+    expect(res.statusCode).toBe(404);
   });
 });
