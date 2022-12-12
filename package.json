@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/baconYao/TDD-nodejs#readme",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "mongoose": "^5.9.4",
     "node-mocks-http": "^1.8.1"
   },
